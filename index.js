@@ -27,10 +27,11 @@ async function declarePaymentQueue() {
 async function publishPayment(payment) {
   try {
     const connection = await amqp.connect(rabbitmqUrl);
-    const channel = await connection.createChannel();
+    const channel = await connection.createConfirmChannel();
     await channel.assertExchange('events', 'topic', { durable: true });
     channel.publish('events', 'payment.success', Buffer.from(JSON.stringify(payment)), { persistent: true });
-    setTimeout(() => connection.close(), 100);
+    await channel.waitForConfirms();
+    await connection.close();
   } catch (error) {
     console.warn(`RabbitMQ unavailable: ${error.message}`);
   }
@@ -44,7 +45,7 @@ app.get('/payments', (request, response) => {
   response.json(Array.from(payments.values()));
 });
 
-app.post('/payments', (request, response) => {
+app.post('/payments', async (request, response) => {
   const { orderId, amount, method = 'card' } = request.body;
   if (!orderId || typeof amount !== 'number' || amount <= 0) {
     return response.status(400).json({ error: 'orderId and a positive numeric amount are required' });
@@ -59,7 +60,7 @@ app.post('/payments', (request, response) => {
     createdAt: new Date().toISOString(),
   };
   payments.set(payment.id, payment);
-  publishPayment(payment);
+  await publishPayment(payment);
   return response.status(201).json(payment);
 });
 
