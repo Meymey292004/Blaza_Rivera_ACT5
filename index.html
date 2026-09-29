@@ -14,6 +14,11 @@
     .service { padding: 20px; border: 1px solid #2d3b51; border-radius: 8px; background: #172235; }
     .service h2 { margin: 0 0 8px; font-size: 1.1rem; }
     .status { color: #7dd3a8; font-weight: 600; }
+    form { margin-top: 32px; padding: 20px; border: 1px solid #2d3b51; border-radius: 8px; background: #172235; }
+    label { display: block; margin-top: 12px; color: #aab6c8; }
+    input, button { box-sizing: border-box; width: 100%; margin-top: 6px; padding: 10px; border: 1px solid #40516d; border-radius: 4px; background: #101827; color: #f3f4f6; }
+    button { margin-top: 18px; cursor: pointer; background: #2563eb; border-color: #2563eb; }
+    #order-result { min-height: 1.5em; color: #7dd3a8; }
   </style>
 </head>
 <body>
@@ -26,6 +31,34 @@
       <article class="service"><h2>Payments</h2><p>Port 3003</p><span class="status">Ready</span></article>
       <article class="service"><h2>Notifications</h2><p>Port 3004</p><span class="status">Ready</span></article>
     </section>
+    <form id="order-form">
+      <h2>Place an order</h2>
+      <label for="customer-id">Customer ID</label>
+      <input id="customer-id" name="customerId" value="frontend-customer" required>
+      <label for="sku">SKU</label>
+      <input id="sku" name="sku" value="item-1" required>
+      <label for="quantity">Quantity</label>
+      <input id="quantity" name="quantity" type="number" min="1" value="1" required>
+      <button type="submit">Submit order</button>
+      <p id="order-result" role="status"></p>
+    </form>
   </main>
+  <script>
+    document.getElementById('order-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const result = document.getElementById('order-result');
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: form.get('customerId'),
+          items: [{ sku: form.get('sku'), quantity: Number(form.get('quantity')) }]
+        })
+      });
+      const order = await response.json();
+      result.textContent = response.ok ? `Order placed: ${order.id}` : order.error;
+    });
+  </script>
 </body>
 </html>
