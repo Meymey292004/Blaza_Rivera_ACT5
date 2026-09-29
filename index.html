@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACT5 Services</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; background: #101827; color: #f3f4f6; }
+    main { width: min(900px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
+    h1 { margin-bottom: 8px; }
+    p { color: #aab6c8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 32px; }
+    .service { padding: 20px; border: 1px solid #2d3b51; border-radius: 8px; background: #172235; }
+    .service h2 { margin: 0 0 8px; font-size: 1.1rem; }
+    .status { color: #7dd3a8; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ACT5 Microservices</h1>
+    <p>Frontend container is running. Service endpoints are available through Docker Compose.</p>
+    <section class="grid" aria-label="Services">
+      <article class="service"><h2>Inventory</h2><p>Port 3001</p><span class="status">Ready</span></article>
+      <article class="service"><h2>Orders</h2><p>Port 3002</p><span class="status">Ready</span></article>
+      <article class="service"><h2>Payments</h2><p>Port 3003</p><span class="status">Ready</span></article>
+      <article class="service"><h2>Notifications</h2><p>Port 3004</p><span class="status">Ready</span></article>
+    </section>
+  </main>
+</body>
+</html>

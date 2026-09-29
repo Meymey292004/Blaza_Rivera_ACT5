@@ -1,0 +1,56 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: act5-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  frontend:
+    build: ./frontend
+    container_name: act5-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - order-service
+      - payment-service
+      - notification-service
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: act5-inventory
+    ports:
+      - "3001:3001"
+
+  order-service:
+    build: ./order-service
+    container_name: act5-order
+    ports:
+      - "3002:3002"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+
+  payment-service:
+    build: ./payment-service
+    container_name: act5-payment
+    ports:
+      - "3003:3003"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+
+  notification-service:
+    build: ./notification-service
+    container_name: act5-notification
+    ports:
+      - "3004:3004"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
