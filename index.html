@@ -42,6 +42,17 @@
       <button type="submit">Submit order</button>
       <p id="order-result" role="status"></p>
     </form>
+    <form id="inventory-form">
+      <h2>Add inventory</h2>
+      <label for="product-name">Product name</label>
+      <input id="product-name" name="name" required>
+      <label for="product-quantity">Quantity</label>
+      <input id="product-quantity" name="quantity" type="number" min="0" value="1" required>
+      <label for="product-price">Price</label>
+      <input id="product-price" name="price" type="number" min="0" step="0.01" value="0" required>
+      <button type="submit">Add inventory</button>
+      <p id="inventory-result" role="status"></p>
+    </form>
   </main>
   <script>
     document.getElementById('order-form').addEventListener('submit', async (event) => {
@@ -58,6 +69,24 @@
       });
       const order = await response.json();
       result.textContent = response.ok ? `Order placed: ${order.id}` : order.error;
+    });
+  </script>
+  <script>
+    document.getElementById('inventory-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const result = document.getElementById('inventory-result');
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.get('name'),
+          quantity: Number(form.get('quantity')),
+          price: Number(form.get('price'))
+        })
+      });
+      const product = await response.json();
+      result.textContent = response.ok ? `Inventory added: ${product.name}` : product.error;
     });
   </script>
 </body>
