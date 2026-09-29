@@ -6,21 +6,36 @@ const app = express();
 const port = Number(process.env.PORT) || 3003;
 const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@rabbitmq:5672';
 const payments = new Map();
+let consumerConnection;
 
 app.use(express.json());
 
-async function declarePaymentQueue() {
+async function consumeOrders() {
   try {
-    const connection = await amqp.connect(rabbitmqUrl);
-    const channel = await connection.createChannel();
+    consumerConnection = await amqp.connect(rabbitmqUrl);
+    const channel = await consumerConnection.createChannel();
     await channel.assertExchange('events', 'topic', { durable: true });
     await channel.assertQueue('payment_queue', { durable: true });
-    await channel.bindQueue('payment_queue', 'events', 'payment.success');
-    await connection.close();
-    console.log('Payment queue declared');
+    await channel.bindQueue('payment_queue', 'events', 'order.placed');
+    await channel.consume('payment_queue', async (message) => {
+      if (!message) return;
+      const order = JSON.parse(message.content.toString());
+      const payment = {
+        id: crypto.randomUUID(),
+        orderId: order.id,
+        amount: Number(order.total) || 0,
+        method: 'order-event',
+        status: 'success',
+        createdAt: new Date().toISOString(),
+      };
+      payments.set(payment.id, payment);
+      await publishPayment(payment);
+      channel.ack(message);
+    });
+    console.log('Payment service consuming order.placed events');
   } catch (error) {
     console.warn(`RabbitMQ unavailable: ${error.message}`);
-    setTimeout(declarePaymentQueue, 3000);
+    setTimeout(consumeOrders, 3000);
   }
 }
 
@@ -66,5 +81,13 @@ app.post('/payments', async (request, response) => {
 
 app.listen(port, () => {
   console.log(`Payment service listening on port ${port}`);
-  declarePaymentQueue();
+  consumeOrders();
 });
+
+async function shutdown() {
+  if (consumerConnection) await consumerConnection.close();
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
